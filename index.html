@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fizz Browser</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+
+    <style>
+        :root {
+            --background: #101219;
+            --surface: rgba(31, 34, 44, 0.86);
+            --surface-hover: rgba(45, 49, 62, 0.95);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f4f6fb;
+            --muted: #9ba3b3;
+            --accent: #776dff;
+            --shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            color: var(--text);
+            background:
+                radial-gradient(circle at 18% 18%, rgba(63, 103, 255, 0.22), transparent 35%),
+                radial-gradient(circle at 83% 68%, rgba(160, 61, 255, 0.19), transparent 38%),
+                var(--background);
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+        }
+
+        button, input { font: inherit; }
+        button { color: inherit; }
+
+        .page {
+            min-height: 100vh;
+            padding: 55px 24px 70px;
+        }
+
+        .container {
+            width: min(920px, 100%);
+            margin: 0 auto;
+        }
+
+        .hero {
+            text-align: center;
+            animation: appear 500ms ease;
+        }
+
+        @keyframes appear {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            display: grid;
+            place-items: center;
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 20px;
+            border-radius: 23px;
+            font-size: 34px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #5edfff, #736cff 55%, #d866ff);
+            box-shadow:
+                0 20px 55px rgba(105, 100, 255, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(38px, 6vw, 60px);
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            margin: 14px 0 0;
+            color: var(--muted);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            width: min(720px, 100%);
+            margin: 30px auto 0;
+            padding: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 0;
+            height: 48px;
+            padding: 0 17px;
+            color: var(--text);
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 17px;
+        }
+
+        .search-button {
+            height: 44px;
+            padding: 0 23px;
+            color: white;
+            background: linear-gradient(135deg, #6e7cff, #965fff);
+            border: none;
+            border-radius: 15px;
+            font-weight: 750;
+            cursor: pointer;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 36px 4px 15px;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .text-button {
+            padding: 8px 11px;
+            color: var(--muted);
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .text-button:hover {
+            color: white;
+            background: var(--surface-hover);
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .quick-link {
+            position: relative;
+            min-height: 125px;
+            padding: 18px;
+            overflow: hidden;
+            text-align: left;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 180ms ease, background 180ms ease;
+        }
+
+        .quick-link::after {
+            content: "";
+            position: absolute;
+            right: -25px;
+            bottom: -28px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--glow);
+            filter: blur(35px);
+            opacity: 0.55;
+        }
+
+        .quick-link:hover {
+            transform: translateY(-5px);
+            background: var(--surface-hover);
+        }
+
+        .quick-icon {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            margin-bottom: 16px;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .quick-title, .quick-url {
+            position: relative;
+            z-index: 1;
+            display: block;
+        }
+
+        .quick-title { font-weight: 750; }
+
+        .quick-url {
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .item-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 15px;
+            background: rgba(31, 34, 44, 0.78);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: transform 160ms ease, background 160ms ease;
+        }
+
+        .list-item:hover {
+            transform: translateX(4px);
+            background: var(--surface-hover);
+        }
+
+        .item-icon {
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(119, 109, 255, 0.16);
+        }
+
+        .item-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-title, .item-url {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .item-title {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .item-url {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .item-time {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .remove-button {
+            padding: 7px 10px;
+            color: #ff9aa7;
+            background: transparent;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background: rgba(255, 100, 120, 0.12);
+        }
+
+        .empty-state {
+            padding: 28px;
+            color: var(--muted);
+            text-align: center;
+            border: 1px dashed var(--border);
+            border-radius: 17px;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            padding: 12px 18px;
+            background: rgba(38, 42, 53, 0.96);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            opacity: 0;
+            transform: translate(-50%, 18px);
+            transition: 180ms ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        @media (max-width: 720px) {
+            .quick-links {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <div class="container">
+            <section class="hero">
+                <div class="logo">F</div>
+                <h1>Willkommen zurück</h1>
+                <p class="subtitle">Suche im Web oder öffne eine deiner Lieblingsseiten.</p>
+
+                <div class="search-box">
+                    <input
+                        id="searchInput"
+                        class="search-input"
+                        autocomplete="off"
+                        placeholder="Was möchtest du suchen?"
+                    >
+                    <button class="search-button" onclick="searchWeb()">Suchen</button>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Schnellzugriff</h2>
+                </div>
+
+                <div class="quick-links">
+                    <button class="quick-link" style="--glow:#4d9cff" onclick="openWebsite('https://www.google.com')">
+                        <span class="quick-icon">G</span>
+                        <span class="quick-title">Google</span>
+                        <span class="quick-url">google.com</span>
+                    </button>
+
+                    <button class="quick-link" style="--glow:#ff4e70" onclick="openWebsite('https://www.youtube.com')">
+                        <span class="quick-icon">▶</span>
+                        <span class="quick-title">YouTube</span>
+                        <span class="quick-url">youtube.com</span>
+                    </button>
+
+                    <button class="quick-link" style="--glow:#ad65ff" onclick="openWebsite('https://www.twitch.tv')">
+                        <span class="quick-icon">◈</span>
+                        <span class="quick-title">Twitch</span>
+                        <span class="quick-url">twitch.tv</span>
+                    </button>
+
+                    <button class="quick-link" style="--glow:#4ed99a" onclick="openWebsite('https://github.com')">
+                        <span class="quick-icon">⌘</span>
+                        <span class="quick-title">GitHub</span>
+                        <span class="quick-url">github.com</span>
+                    </button>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Lesezeichen</h2>
+                </div>
+                <div id="bookmarkList" class="item-list">
+                    <div class="empty-state">Lesezeichen werden geladen …</div>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-header">
+                    <h2 class="section-title">Verlauf</h2>
+                    <button class="text-button" onclick="clearHistory()">Löschen</button>
+                </div>
+                <div id="historyList" class="item-list">
+                    <div class="empty-state">Verlauf wird geladen …</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        let browserBridge = null;
+        let toastTimer = null;
+
+        function connectToPython() {
+            new QWebChannel(qt.webChannelTransport, function (channel) {
+                browserBridge = channel.objects.browserBridge;
+                loadHistory();
+                loadBookmarks();
+            });
+        }
+
+        function openWebsite(value) {
+            if (!browserBridge) {
+                showToast("Browser wird noch vorbereitet …");
+                return;
+            }
+            browserBridge.openWebsite(value);
+        }
+
+        function searchWeb() {
+            const input = document.getElementById("searchInput");
+            const query = input.value.trim();
+
+            if (!query) {
+                showToast("Bitte gib etwas zum Suchen ein 😊");
+                input.focus();
+                return;
+            }
+
+            openWebsite(query);
+        }
+
+        function loadHistory() {
+            browserBridge.getHistory(function (jsonText) {
+                renderList(
+                    document.getElementById("historyList"),
+                    JSON.parse(jsonText),
+                    "◷",
+                    false
+                );
+            });
+        }
+
+        function loadBookmarks() {
+            browserBridge.getBookmarks(function (jsonText) {
+                renderList(
+                    document.getElementById("bookmarkList"),
+                    JSON.parse(jsonText),
+                    "★",
+                    true
+                );
+            });
+        }
+
+        function renderList(container, items, iconText, removable) {
+            container.innerHTML = "";
+
+            if (!items || items.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty-state";
+                empty.textContent = removable
+                    ? "Noch keine Lesezeichen. Drücke oben auf ☆ oder Strg+D."
+                    : "Noch keine besuchten Seiten gespeichert.";
+                container.appendChild(empty);
+                return;
+            }
+
+            items.slice(0, 15).forEach(function (entry) {
+                const item = document.createElement("div");
+                item.className = "list-item";
+                item.addEventListener("click", function () {
+                    openWebsite(entry.url);
+                });
+
+                const icon = document.createElement("div");
+                icon.className = "item-icon";
+                icon.textContent = iconText;
+
+                const text = document.createElement("div");
+                text.className = "item-text";
+
+                const title = document.createElement("div");
+                title.className = "item-title";
+                title.textContent = entry.title || entry.url;
+
+                const url = document.createElement("div");
+                url.className = "item-url";
+                url.textContent = entry.url;
+
+                const time = document.createElement("div");
+                time.className = "item-time";
+                time.textContent = formatDate(entry.time);
+
+                text.append(title, url);
+                item.append(icon, text, time);
+
+                if (removable) {
+                    const remove = document.createElement("button");
+                    remove.className = "remove-button";
+                    remove.textContent = "Entfernen";
+                    remove.addEventListener("click", function (event) {
+                        event.stopPropagation();
+                        browserBridge.removeBookmark(entry.url);
+                        loadBookmarks();
+                        showToast("Lesezeichen entfernt");
+                    });
+                    item.appendChild(remove);
+                }
+
+                container.appendChild(item);
+            });
+        }
+
+        function clearHistory() {
+            browserBridge.clearHistory();
+            loadHistory();
+            showToast("Verlauf wurde gelöscht.");
+        }
+
+        function formatDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return "";
+
+            return date.toLocaleString("de-DE", {
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () {
+                toast.classList.remove("show");
+            }, 2200);
+        }
+
+        document.getElementById("searchInput").addEventListener(
+            "keydown",
+            function (event) {
+                if (event.key === "Enter") searchWeb();
+            }
+        );
+
+        window.addEventListener("load", function () {
+            connectToPython();
+            document.getElementById("searchInput").focus();
+        });
+    </script>
+</body>
+</html>
